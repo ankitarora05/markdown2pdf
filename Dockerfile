@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=user:user app ./app
 COPY --chown=user:user themes ./themes
+COPY --chown=user:user google4d282da7d3423ef3.html ./google4d282da7d3423ef3.html
 
 EXPOSE 7860
 

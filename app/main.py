@@ -13,7 +13,7 @@ from urllib.parse import urlsplit, urlunsplit
 import bleach
 import pymupdf
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from markdown_it import MarkdownIt
 from markdown_pdf import MarkdownPdf, Section
@@ -121,6 +121,12 @@ async def add_security_headers(request, call_next):
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/google4d282da7d3423ef3.html", include_in_schema=False)
+async def google_search_console_verification() -> FileResponse:
+    verification_file = ROOT_DIR / "google4d282da7d3423ef3.html"
+    return FileResponse(verification_file, media_type="text/html")
 
 
 def get_site_url(request: Request) -> str:

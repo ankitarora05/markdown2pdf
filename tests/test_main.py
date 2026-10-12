@@ -16,6 +16,14 @@ def test_health_check() -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_google_search_console_verification_file_is_served_at_site_root() -> None:
+    response = client.get("/google4d282da7d3423ef3.html")
+    assert response.status_code == 200
+    assert response.text.strip() == (
+        "google-site-verification: google4d282da7d3423ef3.html"
+    )
+
+
 def test_index_is_served() -> None:
     response = client.get("/")
     assert response.status_code == 200
