@@ -130,6 +130,25 @@ def test_conversion_returns_pdf() -> None:
     assert response.content.startswith(b"%PDF-")
 
 
+def test_conversion_falls_back_when_selected_theme_renderer_fails(monkeypatch) -> None:
+    def fail_themed_render(markdown: str, theme: str) -> bytes:
+        raise RuntimeError("simulated theme renderer error")
+
+    monkeypatch.setattr("app.main.render_pdf", fail_themed_render)
+    response = client.post(
+        "/api/convert",
+        json={
+            "markdown": "# Fallback PDF\n\nKeep this content in the generated file.",
+            "theme": "minimal",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["x-pdf-theme-fallback"] == "plain"
+    assert response.content.startswith(b"%PDF-")
+    document = pymupdf.open(stream=response.content, filetype="pdf")
+    assert "Keep this content" in document[0].get_text()
+
+
 def test_midnight_pdf_has_dark_page_background() -> None:
     document = pymupdf.open(
         stream=render_pdf("# Midnight\n\nDark theme test.", "dark"),

@@ -157,7 +157,11 @@ async function exportPdf() {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-    showToast('Your PDF is ready — happy sharing!');
+    if (response.headers.get('X-PDF-Theme-Fallback') === 'plain') {
+      showToast('PDF created with basic styling because the selected theme could not render.', true);
+    } else {
+      showToast('Your PDF is ready — happy sharing!');
+    }
   } catch (error) {
     showToast(error.message || 'PDF export failed. Please try again.', true);
   } finally {

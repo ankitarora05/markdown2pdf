@@ -16,6 +16,7 @@ Convert Markdown to polished PDF documents with a responsive editor, live saniti
 
 - Live Markdown preview with server-side parsing and HTML sanitization
 - 16 PDF themes: Paper, GitHub, Midnight, Academic, Minimal, Nord, Solarized, Warm, Dracula, Monokai, Ocean, Forest, Rose, Sepia, High Contrast, and Corporate
+- Falls back to a readable plain PDF if the selected theme renderer fails
 - Theme files discovered automatically from `themes/*.css`
 - Browser-local draft saving; document content is not stored on the server
 - Keyboard shortcut: **⌘ Enter** on macOS or **Ctrl Enter** elsewhere

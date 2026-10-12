@@ -223,6 +223,16 @@ def render_pdf(markdown: str, theme: str) -> bytes:
     return document.tobytes(garbage=4, deflate=True)
 
 
+def render_pdf_fallback(markdown: str) -> bytes:
+    """Render a plain PDF without custom CSS or a table of contents."""
+    pdf = MarkdownPdf(toc_level=0, optimize=False)
+    pdf.meta["title"] = "markdown2pdf document"
+    pdf.add_section(Section(markdown))
+    output = io.BytesIO()
+    pdf.save_bytes(output)
+    return output.getvalue()
+
+
 @app.post("/api/convert")
 async def convert(req: ConvertRequest) -> StreamingResponse:
     if not req.markdown.strip():
@@ -241,20 +251,41 @@ async def convert(req: ConvertRequest) -> StreamingResponse:
             detail="Image references are not supported in PDF exports",
         )
 
+    used_fallback = False
     try:
         pdf_bytes = await asyncio.to_thread(render_pdf, req.markdown, req.theme)
     except Exception:
-        logger.exception("PDF generation failed")
-        raise HTTPException(status_code=500, detail="PDF generation failed") from None
+        logger.exception(
+            "Themed PDF generation failed; retrying without theme CSS or TOC "
+            "(theme=%s, markdown_chars=%d)",
+            req.theme,
+            len(req.markdown),
+        )
+        try:
+            pdf_bytes = await asyncio.to_thread(render_pdf_fallback, req.markdown)
+            used_fallback = True
+        except Exception as fallback_error:
+            logger.exception(
+                "Plain PDF fallback failed (theme=%s, markdown_chars=%d)",
+                req.theme,
+                len(req.markdown),
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=f"PDF generation failed ({type(fallback_error).__name__})",
+            ) from None
 
+    headers = {
+        "Content-Disposition": 'attachment; filename="markdown2pdf-document.pdf"',
+        "Content-Length": str(len(pdf_bytes)),
+        "Cache-Control": "no-store",
+    }
+    if used_fallback:
+        headers["X-PDF-Theme-Fallback"] = "plain"
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": 'attachment; filename="markdown2pdf-document.pdf"',
-            "Content-Length": str(len(pdf_bytes)),
-            "Cache-Control": "no-store",
-        },
+        headers=headers,
     )
 
 
