@@ -1,0 +1,6 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+markdown-pdf==1.13.3
+python-multipart==0.0.20
+markdown-it-py==4.0.0
+bleach==6.2.0
