@@ -4,9 +4,11 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PORT=8000
+    PORT=7860
 
 WORKDIR /app
+
+RUN useradd --create-home --uid 1000 user
 
 # PyMuPDF ships its rendering engine in its manylinux wheel. DejaVu fonts
 # provide reliable glyph coverage for generated PDFs in the slim image.
@@ -17,12 +19,15 @@ RUN apt-get update \
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY themes ./themes
+COPY --chown=user:user app ./app
+COPY --chown=user:user themes ./themes
 
-EXPOSE 8000
+EXPOSE 7860
+
+USER user
+ENV HOME=/home/user
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('PORT', '8000') + '/health', timeout=3)"
+    CMD python -c "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('PORT', '7860') + '/health', timeout=3)"
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-7860} --workers 1"]
