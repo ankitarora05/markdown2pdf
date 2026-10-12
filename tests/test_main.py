@@ -130,6 +130,29 @@ def test_conversion_returns_pdf() -> None:
     assert response.content.startswith(b"%PDF-")
 
 
+def test_pdf_with_h2_as_first_heading_keeps_selected_theme() -> None:
+    response = client.post(
+        "/api/convert",
+        json={
+            "markdown": "## First section\n\n### A subsection\n\nBody text.\n\n## Second section",
+            "theme": "corporate",
+        },
+    )
+    assert response.status_code == 200
+    assert "x-pdf-theme-fallback" not in response.headers
+    document = pymupdf.open(stream=response.content, filetype="pdf")
+    assert document.get_toc()[0][:2] == [1, "First section"]
+    first_heading = next(
+        span
+        for block in document[0].get_text("dict")["blocks"]
+        if "lines" in block
+        for line in block["lines"]
+        for span in line["spans"]
+        if span["text"] == "First section"
+    )
+    assert first_heading["color"] == 0x183653
+
+
 def test_conversion_falls_back_when_selected_theme_renderer_fails(monkeypatch) -> None:
     def fail_themed_render(markdown: str, theme: str) -> bytes:
         raise RuntimeError("simulated theme renderer error")

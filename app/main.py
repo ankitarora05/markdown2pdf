@@ -206,6 +206,14 @@ def render_pdf(markdown: str, theme: str) -> bytes:
     pdf = MarkdownPdf(toc_level=2, optimize=True)
     pdf.meta["title"] = "markdown2pdf document"
     pdf.add_section(Section(markdown), user_css=themes[theme])
+    if pdf.toc and pdf.toc[0][0] > 1:
+        # PyMuPDF requires the first outline entry to be level 1. Documents
+        # that start with `##` otherwise fail during save and lose their theme.
+        level_offset = pdf.toc[0][0] - 1
+        pdf.toc[:] = [
+            (max(1, entry[0] - level_offset), *entry[1:])
+            for entry in pdf.toc
+        ]
     output = io.BytesIO()
     pdf.save_bytes(output)
     pdf_bytes = output.getvalue()
