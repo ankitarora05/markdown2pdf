@@ -23,6 +23,13 @@ def test_google_search_console_verification_file_is_served_at_site_root() -> Non
         "google-site-verification: google4d282da7d3423ef3.html"
     )
 
+def test_indexnow_verification_file_is_served_at_site_root() -> None:
+    response = client.get("/7aede77d8fe54188b41db7c7991a01e7.txt")
+    assert response.status_code == 200
+    assert response.text.strip() == (
+        "7aede77d8fe54188b41db7c7991a01e7"
+    )
+
 
 def test_index_is_served() -> None:
     response = client.get("/")

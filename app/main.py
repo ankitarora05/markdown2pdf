@@ -143,6 +143,11 @@ async def google_search_console_verification() -> FileResponse:
     verification_file = ROOT_DIR / "google4d282da7d3423ef3.html"
     return FileResponse(verification_file, media_type="text/html")
 
+@app.get("/7aede77d8fe54188b41db7c7991a01e7.txt", include_in_schema=False)
+async def indexnow_verification() -> FileResponse:
+    verification_file = ROOT_DIR / "7aede77d8fe54188b41db7c7991a01e7.txt"
+    return FileResponse(verification_file, media_type="text/html")
+
 
 def get_site_url(request: Request) -> str:
     configured_url = os.getenv("PUBLIC_SITE_URL", "").strip()
