@@ -17,7 +17,13 @@ Convert Markdown to polished PDF documents with a responsive editor, live saniti
 ## Features
 
 - Live Markdown preview with server-side parsing and HTML sanitization
-- PDF export through a same-site HTML form POST, returning the PDF as a download rather than a JSON API response
+- PDF export through a same-site authenticated POST, returning the PDF as a download rather than a JSON API response
+- Signup with username, email, first and last name; email confirmation is not required
+- Case-insensitive unique usernames and email addresses, Argon2 password hashing, strong-password validation, and accepted-terms tracking
+- PDF export requires an account and a current login; access JWTs are short-lived and HttpOnly refresh tokens rotate automatically for up to 30 days
+- Email-based, single-use password reset links
+- Public, versioned Terms of Service, Privacy Policy, and Cookie Policy pages; signup links open each policy in a new tab
+- First-visit cookie-choice panel with an essential-only path; optional analytics/advertising choices are recorded separately from agreeing to the Terms
 - 16 PDF themes: Paper, GitHub, Midnight, Academic, Minimal, Nord, Solarized, Warm, Dracula, Monokai, Ocean, Forest, Rose, Sepia, High Contrast, and Corporate
 - Falls back to a readable plain PDF if the selected theme renderer fails
 - Theme files discovered automatically from `themes/*.css`
@@ -36,11 +42,15 @@ Requires Python 3.11 or newer and pip.
 3. Start the server: `uvicorn app.main:app --reload --port 7860`
 4. Open `http://127.0.0.1:7860`.
 
+Without `DATABASE_URL`, account data is stored in the local SQLite database at `data/auth.sqlite3` (ignored by Git). For PostgreSQL, set `DATABASE_URL` to a SQLAlchemy URL such as `postgresql+psycopg://user:password@host:5432/database`. Set a persistent, random `JWT_SECRET` in every deployed environment; otherwise sessions are invalidated whenever the process restarts. Refresh cookies are HttpOnly and Secure in the production Docker image.
+
+Configure `SMTP_HOST`, `SMTP_PORT` (default `587`), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`, and optionally `SMTP_USE_TLS` for password-reset email delivery. Signup itself does not require email confirmation. The reset endpoint intentionally returns the same message whether or not the email belongs to an account.
+
 For a production-like local run, use `uvicorn app.main:app --host 0.0.0.0 --port 7860`.
 
 ## Verify
 
-Run `pytest`. The tests check health and UI routes, automatic theme discovery, preview sanitization, request validation, and that form-based conversion returns PDF bytes.
+Run `pytest`. The tests check health and UI routes, authentication and refresh-token rotation, password recovery, automatic theme discovery, preview sanitization, request validation, and authenticated PDF conversion.
 
 ## Docker
 
@@ -58,8 +68,9 @@ Then visit `http://127.0.0.1:7860` or check `http://127.0.0.1:7860/health`.
 1. Create a **Docker** Space on Hugging Face. Its Space ID should be `ankitarora-05/markdown2pdf` to match the Space you provided.
 2. Create a Hugging Face access token with **write** permission for that Space.
 3. In GitHub, open **Settings → Secrets and variables → Actions**. Add the newly created token as the `HF_TOKEN` secret and set the `HF_SPACE_ID` variable to `ankitarora-05/markdown2pdf`.
-4. In GitHub **Actions**, run **Deploy to Hugging Face Spaces** once using **Run workflow**. Later pushes to `main` run tests and then sync the repository to the Space.
-5. Hugging Face builds the Space from the Dockerfile and README metadata (`sdk: docker`, `app_port: 7860`). When the build finishes, the app is available at `https://<your-username>-<space-name>.hf.space` (check the Space page for its exact URL).
+4. In the Space settings, add `DATABASE_URL` for a persistent PostgreSQL database and a strong, stable `JWT_SECRET`. Add `SMTP_HOST`, `SMTP_FROM`, and the provider credentials if password-reset email is required. The container's local SQLite fallback is not a durable production database.
+5. In GitHub **Actions**, run **Deploy to Hugging Face Spaces** once using **Run workflow**. Later pushes to `main` run tests and then sync the repository to the Space.
+6. Hugging Face builds the Space from the Dockerfile and README metadata (`sdk: docker`, `app_port: 7860`). When the build finishes, the app is available at `https://<your-username>-<space-name>.hf.space` (check the Space page for its exact URL).
 
 To use a custom domain, configure it in the Space settings if available for your account and plan, then set the `PUBLIC_SITE_URL` Space variable to the final HTTPS origin. The default Hugging Face Space URL works without this variable.
 
@@ -73,7 +84,9 @@ After the Space is public, optionally set `PUBLIC_SITE_URL` to its public HTTPS 
 
 ## Project layout
 
-- `app/main.py` — FastAPI routes, preview sanitization, and PDF generation
+- `app/main.py` — FastAPI routes, authenticated PDF export, preview sanitization, and PDF generation
+- `app/auth.py` — PostgreSQL/SQLite account models, password hashing, JWT/refresh sessions, and password recovery
+- `data/` — local SQLite account database (ignored by Git; configure `DATABASE_URL` for PostgreSQL)
 - `app/static/` — browser editor, styling, and client-side interactions
 - `themes/` — PDF stylesheet themes
 - `tests/` — API and end-to-end conversion smoke tests
@@ -83,8 +96,14 @@ After the Space is public, optionally set `PUBLIC_SITE_URL` to its public HTTPS 
 
 Add a CSS file under `themes/`; the server discovers added or edited theme files automatically and applies it to exported PDFs. Theme names come from filenames. For a custom live preview and a human-readable label, add the matching preview rules in `app/static/app.css` and display name in `app/static/app.js`. The bundled picker offers 16 curated styles, and this file-based design supports adding more.
 
+## Legal notices and cookie choices
+
+The current policy drafts are available at `/terms-of-service`, `/privacy-policy`, and `/cookie-policy`, and are linked from the signup form and site footer. New accounts record the accepted Terms version and the Privacy/Cookie Policy acknowledgment timestamps. Cookie category choices are recorded separately; essential-only is a complete choice and does not enable optional tracking. The current application does not load analytics or advertising trackers. Keep policy text, database practices, hosting providers, and consent controls aligned whenever deployment or monetization changes.
+
+These are general product-policy drafts, not legal advice or a certification of compliance. No single set of terms guarantees compliance worldwide. Before public commercial use, have qualified counsel review the actual operator identity/contact details, governing law, consumer rules, age requirements, privacy notices, international data transfers, tax, accessibility, advertising/affiliate disclosures, and local cookie-consent requirements for every target market. Add the correct legal entity/address and operational privacy-request channel if required.
+
 ## Limits and privacy
 
-Markdown requests are limited to 250,000 characters. Conversion is performed in memory and content is not persisted by the application. The form endpoint is still publicly reachable because anonymous visitors need it to create PDFs; using an HTML form instead of a JSON API does not make the conversion operation private. Deploy behind appropriate platform limits and add authentication or rate limiting if private access or abuse prevention is required.
+Markdown requests are limited to 250,000 characters. Conversion is performed in memory and document content is not persisted by the application. Live preview is public, but PDF export requires a valid signed-in account. Account records and password-reset/session metadata are persisted in the configured database. Deploy behind appropriate platform limits and add rate limiting for public authentication endpoints.
 
 For safety in a public conversion service, PDF exports reject Markdown image references so an uploaded document cannot make the renderer read arbitrary local files. Images remain unsupported in exported PDFs.

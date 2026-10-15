@@ -4,11 +4,14 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
+    APP_ENV=production \
+    COOKIE_SECURE=true \
     PORT=7860
 
 WORKDIR /app
 
 RUN useradd --create-home --uid 1000 user
+RUN mkdir -p /app/data && chown -R user:user /app/data
 
 # PyMuPDF ships its rendering engine in its manylinux wheel. DejaVu fonts
 # provide reliable glyph coverage for generated PDFs in the slim image.

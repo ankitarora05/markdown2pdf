@@ -1,5 +1,6 @@
 import json
 import re
+import secrets
 
 import pymupdf
 from fastapi.testclient import TestClient
@@ -8,12 +9,38 @@ from app.main import app, render_pdf
 
 
 client = TestClient(app)
+STRONG_PASSWORD = "Horizon!River8Lighthouse"
+
+
+def signup_payload(username: str | None = None) -> dict[str, object]:
+    chosen_username = username or f"reader{secrets.token_hex(5)}"
+    return {
+        "username": chosen_username,
+        "email": f"{chosen_username}@example.com",
+        "first_name": "Anya",
+        "last_name": "Reader",
+        "password": STRONG_PASSWORD,
+        "accept_terms": True,
+        "acknowledge_privacy": True,
+        "acknowledge_cookies": True,
+    }
+
+
+def signed_in_headers() -> dict[str, str]:
+    response = client.post("/api/auth/signup", json=signup_payload())
+    assert response.status_code == 200
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
 def test_health_check() -> None:
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_refresh_without_a_session_is_a_no_content_response() -> None:
+    response = client.post("/api/auth/refresh")
+    assert response.status_code == 204
 
 
 def test_google_search_console_verification_file_is_served_at_site_root() -> None:
@@ -40,6 +67,11 @@ def test_index_is_served() -> None:
     assert '<form id="convertForm" action="/convert" method="post"></form>' in response.text
     assert 'name="markdown" form="convertForm"' in response.text
     assert 'name="theme" form="convertForm"' in response.text
+    assert 'id="signupForm"' in response.text
+    assert "Sign in or create a free account to export" in response.text
+    assert 'href="/terms-of-service" target="_blank" rel="noopener noreferrer"' in response.text
+    assert 'id="cookiePreferencesButton"' in response.text
+    assert "Your privacy, your choice" in response.text
     for theme_id in (
         "default",
         "github",
@@ -91,6 +123,43 @@ def test_public_site_url_sets_canonical_domain(monkeypatch) -> None:
     assert '"url": "https://markdown2pdf.example/"' in response.text
 
 
+def test_legal_pages_are_readable_and_cross_linked() -> None:
+    expected_sections = {
+        "/terms-of-service": ("Terms of Service", "Acceptable use", "Ankit Arora"),
+        "/privacy-policy": ("Privacy Policy", "International processing", "cookie"),
+        "/cookie-policy": ("Cookie Policy", "Essential only", "No advertising or analytics cookies are active"),
+    }
+    for path, expected_phrases in expected_sections.items():
+        response = client.get(path)
+        assert response.status_code == 200
+        assert 'rel="stylesheet" href="/static/legal.css' in response.text
+        assert all(phrase.casefold() in response.text.casefold() for phrase in expected_phrases)
+        assert "/terms-of-service" in response.text
+        assert "/privacy-policy" in response.text
+        assert "/cookie-policy" in response.text
+
+
+def test_cookie_consent_records_essential_only_or_optional_categories() -> None:
+    essential_response = client.post(
+        "/api/auth/cookie-consent",
+        json={"essential": True, "analytics": False, "advertising": False},
+    )
+    assert essential_response.status_code == 200
+    assert essential_response.json()["essential"] is True
+    assert essential_response.json()["analytics"] is False
+
+    optional_response = client.post(
+        "/api/auth/cookie-consent",
+        json={"essential": True, "analytics": True, "advertising": True},
+    )
+    assert optional_response.status_code == 200
+    assert optional_response.json()["advertising"] is True
+    assert client.post(
+        "/api/auth/cookie-consent",
+        json={"essential": False, "analytics": True, "advertising": True},
+    ).status_code == 422
+
+
 def test_themes_are_discovered() -> None:
     response = client.get("/api/themes")
     assert response.status_code == 200
@@ -125,7 +194,11 @@ def test_preview_renders_and_sanitizes_html() -> None:
 
 
 def test_empty_markdown_is_rejected() -> None:
-    response = client.post("/convert", data={"markdown": "  \n  "})
+    response = client.post(
+        "/convert",
+        data={"markdown": "  \n  "},
+        headers=signed_in_headers(),
+    )
     assert response.status_code == 422
 
 
@@ -138,6 +211,7 @@ def test_pdf_export_rejects_image_references() -> None:
     response = client.post(
         "/convert",
         data={"markdown": "![private file](/etc/passwd)"},
+        headers=signed_in_headers(),
     )
     assert response.status_code == 422
 
@@ -146,6 +220,7 @@ def test_conversion_returns_pdf() -> None:
     response = client.post(
         "/convert",
         data={"markdown": "# PDF test\n\nThis is a test.", "theme": "github"},
+        headers=signed_in_headers(),
     )
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
@@ -183,6 +258,7 @@ def test_pdf_with_h2_as_first_heading_keeps_selected_theme() -> None:
             "markdown": "## First section\n\n### A subsection\n\nBody text.\n\n## Second section",
             "theme": "corporate",
         },
+        headers=signed_in_headers(),
     )
     assert response.status_code == 200
     assert "x-pdf-theme-fallback" not in response.headers
@@ -210,6 +286,7 @@ def test_conversion_falls_back_when_selected_theme_renderer_fails(monkeypatch) -
             "markdown": "# Fallback PDF\n\nKeep this content in the generated file.",
             "theme": "minimal",
         },
+        headers=signed_in_headers(),
     )
     assert response.status_code == 200
     assert response.headers["x-pdf-theme-fallback"] == "plain"
@@ -289,3 +366,120 @@ def test_footer_links_to_ankit_arora_linkedin() -> None:
     response = client.get("/")
     assert 'href="https://www.linkedin.com/in/ankit-arora-86a7b237/"' in response.text
     assert ">Ankit Arora</a>" in response.text
+
+
+def test_pdf_export_requires_a_signed_in_user() -> None:
+    response = client.post("/convert", data={"markdown": "# Private export"})
+    assert response.status_code == 401
+
+
+def test_signup_and_login_return_access_token_and_set_http_only_refresh_cookie() -> None:
+    payload = signup_payload()
+    signup_response = client.post("/api/auth/signup", json=payload)
+    assert signup_response.status_code == 200
+    assert signup_response.json()["user"]["username"] == payload["username"]
+    assert signup_response.json()["token_type"] == "bearer"
+    assert client.cookies.get("markdown2pdf_refresh")
+    assert "httponly" in signup_response.headers["set-cookie"].lower()
+    assert "password_hash" not in signup_response.text
+
+    login_response = client.post(
+        "/api/auth/login",
+        json={"username": payload["username"].upper(), "password": STRONG_PASSWORD},
+    )
+    assert login_response.status_code == 200
+    assert login_response.json()["access_token"]
+
+
+def test_signup_rejects_duplicate_case_insensitive_username_and_weak_password() -> None:
+    payload = signup_payload()
+    assert client.post("/api/auth/signup", json=payload).status_code == 200
+    duplicate = {**payload, "username": str(payload["username"]).upper(), "email": "another@example.com"}
+    assert client.post("/api/auth/signup", json=duplicate).status_code == 409
+
+    weak_password = {**signup_payload(), "password": "short"}
+    assert client.post("/api/auth/signup", json=weak_password).status_code == 422
+    username_in_password = {
+        **signup_payload("SampleUser"),
+        "password": "SampleUser!234567",
+    }
+    assert client.post("/api/auth/signup", json=username_in_password).status_code == 422
+    terms_not_accepted = {**signup_payload(), "accept_terms": False}
+    assert client.post("/api/auth/signup", json=terms_not_accepted).status_code == 422
+    privacy_not_acknowledged = {**signup_payload(), "acknowledge_privacy": False}
+    assert client.post("/api/auth/signup", json=privacy_not_acknowledged).status_code == 422
+
+
+def test_refresh_token_is_rotated_and_replay_revokes_its_family() -> None:
+    signup_response = client.post("/api/auth/signup", json=signup_payload())
+    assert signup_response.status_code == 200
+    original_cookie = client.cookies.get("markdown2pdf_refresh")
+    assert original_cookie
+
+    refresh_response = client.post("/api/auth/refresh")
+    assert refresh_response.status_code == 200
+    rotated_cookie = client.cookies.get("markdown2pdf_refresh")
+    assert rotated_cookie and rotated_cookie != original_cookie
+
+    client.cookies.set("markdown2pdf_refresh", original_cookie, path="/api/auth")
+    replay_response = client.post("/api/auth/refresh")
+    assert replay_response.status_code == 401
+
+
+def test_password_reset_uses_email_link_and_invalidates_existing_sessions(monkeypatch) -> None:
+    sent_messages = []
+
+    class FakeSMTP:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def ehlo(self):
+            return None
+
+        def starttls(self):
+            return None
+
+        def login(self, *args):
+            return None
+
+        def send_message(self, message):
+            sent_messages.append(message)
+
+    monkeypatch.setattr("app.auth.smtplib.SMTP", FakeSMTP)
+    monkeypatch.setenv("SMTP_HOST", "smtp.example.test")
+    monkeypatch.setenv("SMTP_FROM", "accounts@example.test")
+    monkeypatch.setenv("SMTP_USE_TLS", "false")
+    payload = signup_payload()
+    signup_response = client.post("/api/auth/signup", json=payload)
+    assert signup_response.status_code == 200
+    previous_access_token = signup_response.json()["access_token"]
+
+    forgot_response = client.post(
+        "/api/auth/forgot-password",
+        json={"email": payload["email"]},
+    )
+    assert forgot_response.status_code == 200
+    assert sent_messages
+    reset_link = re.search(r"\?reset=([A-Za-z0-9_-]+)", sent_messages[0].get_content())
+    assert reset_link is not None
+
+    reset_response = client.post(
+        "/api/auth/reset-password",
+        json={"token": reset_link.group(1), "password": "New!Password8Riverbank"},
+    )
+    assert reset_response.status_code == 200
+    assert client.post(
+        "/convert",
+        data={"markdown": "# Old access token"},
+        headers={"Authorization": f"Bearer {previous_access_token}"},
+    ).status_code == 401
+    assert client.post(
+        "/api/auth/login",
+        json={"username": payload["username"], "password": "New!Password8Riverbank"},
+    ).status_code == 200

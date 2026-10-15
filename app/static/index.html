@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f8fc">
-  <meta name="description" content="Convert Markdown to PDF free with 16 themes: GitHub, Midnight, Dracula, Monokai, Nord, Solarized, Academic, and more. Live preview, no CSS, instant download.">
+  <meta name="description" content="Convert Markdown to PDF with 16 polished themes and live preview. Create a free account or sign in to securely export and download your document.">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <link rel="canonical" href="{{CANONICAL_URL}}">
@@ -13,12 +13,12 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="markdown2pdf">
   <meta property="og:title" content="Markdown to PDF Converter | markdown2pdf">
-  <meta property="og:description" content="Convert Markdown to a polished PDF with 16 themes, live preview, and one-click download. No account or custom CSS required.">
+  <meta property="og:description" content="Convert Markdown to a polished PDF with 16 themes and live preview. Sign in or create a free account to export.">
   <meta property="og:url" content="{{CANONICAL_URL}}">
   <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Markdown to PDF Converter | markdown2pdf">
-  <meta name="twitter:description" content="Convert Markdown to a polished PDF with 16 selectable themes, live preview, and instant download. Free and no account required.">
+  <meta name="twitter:description" content="Convert Markdown to a polished PDF with 16 selectable themes and live preview. Create a free account to export.">
   <title>Markdown to PDF Converter | markdown2pdf</title>
   <meta name="google-site-verification" content="BleH8DOuZ9FtzDExKYsiuQud2m6p8FVyLIneOwSkc-E" />
   <script type="application/ld+json">
@@ -38,7 +38,7 @@
           "name": "markdown2pdf",
           "alternateName": "Markdown to PDF Converter",
           "url": "{{SITE_URL_JSON}}/",
-          "description": "A free online Markdown to PDF converter with live preview, 16 selectable document themes, and one-click downloads.",
+          "description": "A free online Markdown to PDF converter with live preview, 16 selectable document themes, and account-based PDF exports.",
           "applicationCategory": "UtilitiesApplication",
           "operatingSystem": "Any",
           "browserRequirements": "Requires JavaScript and a modern web browser.",
@@ -88,10 +88,10 @@
             },
             {
               "@type": "Question",
-              "name": "Do I need an account or custom CSS?",
+              "name": "Do I need an account to export a PDF?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No account or custom CSS is needed. Choose one of the built-in themes and export your PDF."
+                "text": "Live preview is available without an account. Create a free account or sign in before exporting a PDF. No custom CSS is needed."
               }
             },
             {
@@ -107,8 +107,8 @@
       ]
     }
   </script>
-  <link rel="stylesheet" href="/static/app.css?v=themes-16-pdf-recovery">
-  <script src="/static/app.js?v=server-form-export" defer></script>
+  <link rel="stylesheet" href="/static/app.css?v=privacy-consent-1">
+  <script src="/static/app.js?v=cookie-consent-3" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -145,6 +145,11 @@
         <button class="export-button" id="convertButton" type="submit" form="convertForm">
           <span aria-hidden="true">↓</span><span>Export PDF</span>
         </button>
+        <div class="account-controls">
+          <span class="account-status" id="accountStatus" hidden></span>
+          <button class="account-button" id="authActionButton" type="button">Sign in</button>
+          <button class="signout-button" id="signOutButton" type="button" hidden>Sign out</button>
+        </div>
       </div>
     </header>
 
@@ -189,11 +194,11 @@
         </article>
         <article>
           <h2>Choose a document theme</h2>
-          <p>Choose a style for your content: GitHub, Midnight, Dracula, or Monokai for technical docs; Academic or Minimal for clean reading; Nord, Ocean, Forest, Rose, Sepia, Solarized, or Warm for color; and Paper, High Contrast, or Corporate for everyday and professional documents. Themes match in live preview and PDF export.</p>
+          <p>Choose a style for your content: GitHub, Midnight, Dracula, or Monokai for technical docs; Academic or Minimal for clean reading; Nord, Ocean, Forest, Rose, Sepia, Solarized, or Warm for color; and Paper, High Contrast, or Corporate for everyday and professional documents. Themes match in live preview and PDF export. Sign in or create a free account to export.</p>
         </article>
         <article>
           <h2>Keep your draft close</h2>
-          <p>Your working draft is saved in this browser, and the converter does not keep documents on the server. Export a PDF when you are ready to save or share your work.</p>
+          <p>Your working draft is saved in this browser, and the converter does not keep documents on the server. Sign in or create an account when you are ready to export and share your work.</p>
         </article>
       </div>
       <section class="theme-showcase" aria-labelledby="theme-title">
@@ -233,8 +238,8 @@
           <p>Choose from 16 built-in themes: Paper, GitHub, Midnight, Academic, Minimal, Nord, Solarized, Warm, Dracula, Monokai, Ocean, Forest, Rose, Sepia, High Contrast, and Corporate. No custom CSS is needed.</p>
         </details>
         <details>
-          <summary>Do I need an account or custom CSS?</summary>
-          <p>No account or custom CSS is needed. Choose one of the built-in themes and export your PDF.</p>
+          <summary>Do I need an account to export a PDF?</summary>
+          <p>Create a free account or sign in to export your PDF; live preview remains available without an account.</p>
         </details>
         <details>
           <summary>Is my Markdown document saved?</summary>
@@ -250,8 +255,72 @@
 
     <footer class="site-footer">
       <span>Creator <a href="https://www.linkedin.com/in/ankit-arora-86a7b237/" target="_blank" rel="me noopener noreferrer">markdown2pdf © Ankit Arora</a></span>
+      <nav class="footer-legal-links" aria-label="Legal and privacy">
+        <a href="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+        <a href="/cookie-policy" target="_blank" rel="noopener noreferrer">Cookie Policy</a>
+        <button id="cookiePreferencesButton" type="button">Cookie preferences</button>
+      </nav>
       <span>markdown2pdf · Markdown to PDF</span>
     </footer>
+
+    <section class="cookie-banner" id="cookieBanner" aria-label="Cookie choices" aria-live="polite" hidden>
+      <div class="cookie-banner-copy">
+        <span class="cookie-icon" aria-hidden="true">◒</span>
+        <div><strong>Your privacy, your choice</strong><p>Choose an option to continue. We use essential browser storage for sign-in and your local draft. No analytics or ad trackers run today. <a href="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms</a> · <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy</a> · <a href="/cookie-policy" target="_blank" rel="noopener noreferrer">Cookie Policy</a>.</p></div>
+      </div>
+      <div class="cookie-banner-actions">
+        <button class="cookie-essential-button" id="essentialCookiesButton" type="button">Essential only</button>
+        <button class="cookie-optional-button" id="optionalCookiesButton" type="button">Allow optional</button>
+      </div>
+    </section>
+
+    <section class="auth-modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden>
+      <button class="auth-backdrop" type="button" data-auth-close aria-label="Close account dialog"></button>
+      <div class="auth-dialog">
+        <button class="auth-close" type="button" data-auth-close aria-label="Close">×</button>
+        <span class="auth-brand-mark" aria-hidden="true">✳</span>
+        <p class="auth-eyebrow">Convert Markdown to PDF, beautifully</p>
+        <h2 id="authTitle">Welcome</h2>
+        <p class="auth-intro" id="authIntro">Sign in to export your document as a PDF.</p>
+        <div class="auth-tabs" id="authTabs" role="tablist" aria-label="Account options">
+          <button type="button" class="active" data-auth-view="login" role="tab" aria-selected="true">Sign in</button>
+          <button type="button" data-auth-view="signup" role="tab" aria-selected="false">Create account</button>
+        </div>
+        <p class="auth-message" id="authMessage" role="status" aria-live="polite" hidden></p>
+
+        <form class="auth-form" id="loginForm" autocomplete="on">
+          <label>Username<input name="username" autocomplete="username" required maxlength="80" placeholder="Your username"></label>
+          <label>Password<input name="password" type="password" autocomplete="current-password" required maxlength="128" placeholder="Your password"></label>
+          <button class="auth-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
+          <button class="auth-text-button" type="button" data-auth-view="forgot">Forgot your password?</button>
+        </form>
+
+        <form class="auth-form" id="signupForm" autocomplete="on" hidden>
+          <div class="auth-field-row">
+            <label>First name<input name="first_name" autocomplete="given-name" required maxlength="80" placeholder="First name"></label>
+            <label>Last name<input name="last_name" autocomplete="family-name" required maxlength="80" placeholder="Last name"></label>
+          </div>
+          <label>Username<input name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_.-]+" placeholder="Choose a unique username"><span class="auth-field-hint">3–32 letters, numbers, dots, dashes, or underscores</span></label>
+          <label>Email<input name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com"></label>
+          <label>Password<input name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="128" placeholder="Create a strong password"><span class="auth-field-hint">At least 12 characters with uppercase, lowercase, a number, and a symbol.</span></label>
+          <label class="terms-check"><input name="accept_terms" type="checkbox" required><span>I agree to the <a href="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</a> and acknowledge the <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="/cookie-policy" target="_blank" rel="noopener noreferrer">Cookie Policy</a>.</span></label>
+          <button class="auth-submit" type="submit">Create account <span aria-hidden="true">→</span></button>
+        </form>
+
+        <form class="auth-form" id="forgotForm" autocomplete="on" hidden>
+          <label>Email address<input name="email" type="email" autocomplete="email" required maxlength="254" placeholder="The email on your account"></label>
+          <button class="auth-submit" type="submit">Send reset link <span aria-hidden="true">→</span></button>
+          <button class="auth-text-button" type="button" data-auth-view="login">Back to sign in</button>
+        </form>
+
+        <form class="auth-form" id="resetForm" autocomplete="on" hidden>
+          <label>New password<input name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="128" placeholder="Create a strong password"><span class="auth-field-hint">At least 12 characters with uppercase, lowercase, a number, and a symbol.</span></label>
+          <button class="auth-submit" type="submit">Update password <span aria-hidden="true">→</span></button>
+          <button class="auth-text-button" type="button" data-auth-view="login">Back to sign in</button>
+        </form>
+      </div>
+    </section>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>

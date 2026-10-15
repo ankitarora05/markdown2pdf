@@ -12,12 +12,13 @@ from urllib.parse import urlsplit, urlunsplit
 
 import bleach
 import pymupdf
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from markdown_it import MarkdownIt
 from markdown_pdf import MarkdownPdf, Section
 from pydantic import BaseModel, ConfigDict, Field
+from app.auth import User, require_current_user, router as auth_router
 
 logger = logging.getLogger(__name__)
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -116,6 +117,7 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+app.include_router(auth_router)
 
 
 @app.middleware("http")
@@ -175,6 +177,21 @@ async def index(request: Request) -> HTMLResponse:
     return HTMLResponse(document)
 
 
+@app.get("/terms-of-service", include_in_schema=False)
+async def terms_of_service() -> FileResponse:
+    return FileResponse(STATIC_DIR / "terms.html", media_type="text/html")
+
+
+@app.get("/privacy-policy", include_in_schema=False)
+async def privacy_policy() -> FileResponse:
+    return FileResponse(STATIC_DIR / "privacy.html", media_type="text/html")
+
+
+@app.get("/cookie-policy", include_in_schema=False)
+async def cookie_policy() -> FileResponse:
+    return FileResponse(STATIC_DIR / "cookies.html", media_type="text/html")
+
+
 @app.get("/robots.txt", include_in_schema=False)
 async def robots(request: Request) -> Response:
     site_url = get_site_url(request)
@@ -196,6 +213,9 @@ async def sitemap(request: Request) -> Response:
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
         f"<url><loc>{html.escape(site_url, quote=True)}/</loc>"
         "<changefreq>weekly</changefreq><priority>1.0</priority></url>"
+        f"<url><loc>{html.escape(site_url, quote=True)}/terms-of-service</loc></url>"
+        f"<url><loc>{html.escape(site_url, quote=True)}/privacy-policy</loc></url>"
+        f"<url><loc>{html.escape(site_url, quote=True)}/cookie-policy</loc></url>"
         "</urlset>"
     )
     return Response(body, media_type="application/xml; charset=utf-8")
@@ -271,6 +291,7 @@ def render_pdf_fallback(markdown: str) -> bytes:
 async def convert(
     markdown: Annotated[str, Form(min_length=1, max_length=MAX_MARKDOWN_LENGTH)],
     theme: Annotated[str, Form(max_length=64)] = "default",
+    _user: User = Depends(require_current_user),
 ) -> StreamingResponse:
     if not markdown.strip():
         raise HTTPException(status_code=422, detail="Markdown content is empty")

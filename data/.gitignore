@@ -1,0 +1,4 @@
+# Local authentication database files; use a managed PostgreSQL database in production.
+*.db
+*.sqlite
+*.sqlite3
