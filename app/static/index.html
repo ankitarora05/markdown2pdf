@@ -108,7 +108,7 @@
     }
   </script>
   <link rel="stylesheet" href="/static/app.css?v=themes-16-pdf-recovery">
-  <script src="/static/app.js?v=themes-16-pdf-recovery" defer></script>
+  <script src="/static/app.js?v=server-form-export" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -119,9 +119,10 @@
       </a>
       <div class="topbar-center"><span class="live-dot"></span> All changes saved locally</div>
       <div class="toolbar">
+        <form id="convertForm" action="/convert" method="post"></form>
         <label class="theme-picker" for="themeSelect">
           <span class="theme-icon" aria-hidden="true">◐</span>
-          <select id="themeSelect" aria-label="PDF theme">
+          <select id="themeSelect" name="theme" form="convertForm" aria-label="PDF theme">
             <option value="default">Paper</option>
             <option value="github">GitHub</option>
             <option value="dark">Midnight</option>
@@ -141,7 +142,7 @@
           </select>
           <span class="chevron" aria-hidden="true">⌄</span>
         </label>
-        <button class="export-button" id="convertButton" type="button">
+        <button class="export-button" id="convertButton" type="submit" form="convertForm">
           <span aria-hidden="true">↓</span><span>Export PDF</span>
         </button>
       </div>
@@ -155,7 +156,7 @@
         </div>
         <div class="editor-wrap">
           <div class="line-gutter" id="lineGutter" aria-hidden="true">1</div>
-          <textarea id="markdownInput" aria-label="Markdown source" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+          <textarea id="markdownInput" name="markdown" form="convertForm" aria-label="Markdown source" spellcheck="false" autocapitalize="off" autocomplete="off" required maxlength="250000"></textarea>
         </div>
         <footer class="editor-footer">
           <div class="markdown-hint"><span class="markdown-badge">M↓</span> Markdown <span class="hint-divider">·</span> <span id="wordCount">0 words</span></div>
@@ -248,7 +249,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>Creator <a href="https://www.linkedin.com/in/ankit-arora-86a7b237/" target="_blank" rel="me noopener noreferrer">Ankit Arora</a></span>
+      <span>Creator <a href="https://www.linkedin.com/in/ankit-arora-86a7b237/" target="_blank" rel="me noopener noreferrer">markdown2pdf © Ankit Arora</a></span>
       <span>markdown2pdf · Markdown to PDF</span>
     </footer>
 

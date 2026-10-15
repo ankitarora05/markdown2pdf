@@ -1,7 +1,7 @@
 const input = document.querySelector('#markdownInput');
 const preview = document.querySelector('#previewContent');
 const themeSelect = document.querySelector('#themeSelect');
-const convertButton = document.querySelector('#convertButton');
+const convertForm = document.querySelector('#convertForm');
 const clearButton = document.querySelector('#clearButton');
 const wordCount = document.querySelector('#wordCount');
 const lineGutter = document.querySelector('#lineGutter');
@@ -129,50 +129,18 @@ async function loadThemes() {
   }
 }
 
-async function exportPdf() {
+function submitConversion(event) {
   if (!input.value.trim()) {
+    event.preventDefault();
     showToast('Add some Markdown before exporting.', true);
     input.focus();
     return;
-  }
-
-  convertButton.disabled = true;
-  convertButton.lastElementChild.textContent = 'Preparing…';
-  try {
-    const response = await fetch('/api/convert', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ markdown: input.value, theme: themeSelect.value }),
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || 'PDF export failed. Please try again.');
-    }
-    const pdf = await response.blob();
-    const url = URL.createObjectURL(pdf);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'markdown2pdf-document.pdf';
-    document.body.append(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    if (response.headers.get('X-PDF-Theme-Fallback') === 'plain') {
-      showToast('PDF created with basic styling because the selected theme could not render.', true);
-    } else {
-      showToast('Your PDF is ready — happy sharing!');
-    }
-  } catch (error) {
-    showToast(error.message || 'PDF export failed. Please try again.', true);
-  } finally {
-    convertButton.disabled = false;
-    convertButton.lastElementChild.textContent = 'Export PDF';
   }
 }
 
 input.addEventListener('input', schedulePreview);
 input.addEventListener('scroll', () => { lineGutter.scrollTop = input.scrollTop; });
-convertButton.addEventListener('click', exportPdf);
+convertForm.addEventListener('submit', submitConversion);
 clearButton.addEventListener('click', () => {
   if (!input.value || window.confirm('Clear this document?')) {
     input.value = '';
@@ -183,7 +151,7 @@ clearButton.addEventListener('click', () => {
 document.addEventListener('keydown', (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
     event.preventDefault();
-    exportPdf();
+    convertForm.requestSubmit();
   }
 });
 

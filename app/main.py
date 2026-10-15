@@ -12,7 +12,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 import bleach
 import pymupdf
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from markdown_it import MarkdownIt
@@ -81,11 +81,26 @@ def get_themes() -> dict[str, str]:
     return THEMES
 
 
-class ConvertRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    markdown: Annotated[str, Field(min_length=1, max_length=MAX_MARKDOWN_LENGTH)]
-    theme: str = "default"
+def add_copyright_footer(pdf_bytes: bytes) -> bytes:
+    document = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+    footer_text = "markdown2pdf © Markdown to PDF Converter"
+    for page in document:
+        footer_rect = pymupdf.Rect(
+            36,
+            page.rect.height - 28,
+            page.rect.width - 36,
+            page.rect.height - 10,
+        )
+        page.insert_textbox(
+            footer_rect,
+            footer_text,
+            fontname="helv",
+            fontsize=8,
+            color=(0.48, 0.50, 0.54),
+            align=pymupdf.TEXT_ALIGN_CENTER,
+            overlay=True,
+        )
+    return document.tobytes(garbage=4, deflate=True)
 
 
 class PreviewRequest(BaseModel):
@@ -95,7 +110,7 @@ class PreviewRequest(BaseModel):
 
 
 app = FastAPI(
-    title="markdown2pdf — Markdown to PDF Converter",
+    title="markdown2pdf © Markdown to PDF Converter",
     version="1.0.0",
     description="Convert Markdown to polished PDF documents with live preview and selectable themes.",
     docs_url=None,
@@ -225,7 +240,7 @@ def render_pdf(markdown: str, theme: str) -> bytes:
     pdf_bytes = output.getvalue()
     background_color = PDF_PAGE_BACKGROUNDS.get(theme)
     if background_color is None:
-        return pdf_bytes
+        return add_copyright_footer(pdf_bytes)
 
     document = pymupdf.open(stream=pdf_bytes, filetype="pdf")
     page_background = tuple(
@@ -234,7 +249,7 @@ def render_pdf(markdown: str, theme: str) -> bytes:
     )
     for page in document:
         page.draw_rect(page.rect, color=None, fill=page_background, overlay=False)
-    return document.tobytes(garbage=4, deflate=True)
+    return add_copyright_footer(document.tobytes(garbage=4, deflate=True))
 
 
 def render_pdf_fallback(markdown: str) -> bytes:
@@ -244,19 +259,22 @@ def render_pdf_fallback(markdown: str) -> bytes:
     pdf.add_section(Section(markdown))
     output = io.BytesIO()
     pdf.save_bytes(output)
-    return output.getvalue()
+    return add_copyright_footer(output.getvalue())
 
 
-@app.post("/api/convert")
-async def convert(req: ConvertRequest) -> StreamingResponse:
-    if not req.markdown.strip():
+@app.post("/convert")
+async def convert(
+    markdown: Annotated[str, Form(min_length=1, max_length=MAX_MARKDOWN_LENGTH)],
+    theme: Annotated[str, Form(max_length=64)] = "default",
+) -> StreamingResponse:
+    if not markdown.strip():
         raise HTTPException(status_code=422, detail="Markdown content is empty")
     themes = get_themes()
-    if req.theme not in themes:
+    if theme not in themes:
         raise HTTPException(status_code=422, detail="Unknown PDF theme")
     if any(
         child.type == "image"
-        for token in markdown_renderer.parse(req.markdown)
+        for token in markdown_renderer.parse(markdown)
         if token.type == "inline" and token.children
         for child in token.children
     ):
@@ -267,22 +285,22 @@ async def convert(req: ConvertRequest) -> StreamingResponse:
 
     used_fallback = False
     try:
-        pdf_bytes = await asyncio.to_thread(render_pdf, req.markdown, req.theme)
+        pdf_bytes = await asyncio.to_thread(render_pdf, markdown, theme)
     except Exception:
         logger.exception(
             "Themed PDF generation failed; retrying without theme CSS or TOC "
             "(theme=%s, markdown_chars=%d)",
-            req.theme,
-            len(req.markdown),
+            theme,
+            len(markdown),
         )
         try:
-            pdf_bytes = await asyncio.to_thread(render_pdf_fallback, req.markdown)
+            pdf_bytes = await asyncio.to_thread(render_pdf_fallback, markdown)
             used_fallback = True
         except Exception as fallback_error:
             logger.exception(
                 "Plain PDF fallback failed (theme=%s, markdown_chars=%d)",
-                req.theme,
-                len(req.markdown),
+                theme,
+                len(markdown),
             )
             raise HTTPException(
                 status_code=500,

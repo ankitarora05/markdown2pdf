@@ -17,6 +17,7 @@ Convert Markdown to polished PDF documents with a responsive editor, live saniti
 ## Features
 
 - Live Markdown preview with server-side parsing and HTML sanitization
+- PDF export through a same-site HTML form POST, returning the PDF as a download rather than a JSON API response
 - 16 PDF themes: Paper, GitHub, Midnight, Academic, Minimal, Nord, Solarized, Warm, Dracula, Monokai, Ocean, Forest, Rose, Sepia, High Contrast, and Corporate
 - Falls back to a readable plain PDF if the selected theme renderer fails
 - Theme files discovered automatically from `themes/*.css`
@@ -39,7 +40,7 @@ For a production-like local run, use `uvicorn app.main:app --host 0.0.0.0 --port
 
 ## Verify
 
-Run `pytest`. The tests check health and UI routes, automatic theme discovery, preview sanitization, request validation, and that conversion returns PDF bytes.
+Run `pytest`. The tests check health and UI routes, automatic theme discovery, preview sanitization, request validation, and that form-based conversion returns PDF bytes.
 
 ## Docker
 
@@ -84,6 +85,6 @@ Add a CSS file under `themes/`; the server discovers added or edited theme files
 
 ## Limits and privacy
 
-Markdown requests are limited to 250,000 characters. Conversion is performed in memory and content is not persisted by the application. As with any internet-facing upload/conversion endpoint, deploy behind appropriate platform limits and monitor resource use if you expect untrusted, high-volume traffic.
+Markdown requests are limited to 250,000 characters. Conversion is performed in memory and content is not persisted by the application. The form endpoint is still publicly reachable because anonymous visitors need it to create PDFs; using an HTML form instead of a JSON API does not make the conversion operation private. Deploy behind appropriate platform limits and add authentication or rate limiting if private access or abuse prevention is required.
 
 For safety in a public conversion service, PDF exports reject Markdown image references so an uploaded document cannot make the renderer read arbitrary local files. Images remain unsupported in exported PDFs.

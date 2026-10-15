@@ -30,6 +30,9 @@ def test_index_is_served() -> None:
     assert "Markdown to PDF" in response.text
     assert "markdown2pdf" in response.text
     assert "16 themes" in response.text
+    assert '<form id="convertForm" action="/convert" method="post"></form>' in response.text
+    assert 'name="markdown" form="convertForm"' in response.text
+    assert 'name="theme" form="convertForm"' in response.text
     for theme_id in (
         "default",
         "github",
@@ -115,22 +118,27 @@ def test_preview_renders_and_sanitizes_html() -> None:
 
 
 def test_empty_markdown_is_rejected() -> None:
-    response = client.post("/api/convert", json={"markdown": "  \n  "})
+    response = client.post("/convert", data={"markdown": "  \n  "})
     assert response.status_code == 422
+
+
+def test_conversion_uses_posted_html_form_not_json_api() -> None:
+    assert client.get("/convert").status_code == 405
+    assert client.post("/api/convert", json={"markdown": "# Test"}).status_code == 404
 
 
 def test_pdf_export_rejects_image_references() -> None:
     response = client.post(
-        "/api/convert",
-        json={"markdown": "![private file](/etc/passwd)"},
+        "/convert",
+        data={"markdown": "![private file](/etc/passwd)"},
     )
     assert response.status_code == 422
 
 
 def test_conversion_returns_pdf() -> None:
     response = client.post(
-        "/api/convert",
-        json={"markdown": "# PDF test\n\nThis is a test.", "theme": "github"},
+        "/convert",
+        data={"markdown": "# PDF test\n\nThis is a test.", "theme": "github"},
     )
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
@@ -138,10 +146,33 @@ def test_conversion_returns_pdf() -> None:
     assert response.content.startswith(b"%PDF-")
 
 
+def test_generated_pdf_has_centered_footer_on_every_page() -> None:
+    markdown = "\n\n".join(
+        f"Paragraph {index}: This repeated content makes the generated document span several pages."
+        for index in range(100)
+    )
+    document = pymupdf.open(
+        stream=render_pdf(markdown, "default"),
+        filetype="pdf",
+    )
+    assert len(document) > 1
+    for page in document:
+        footer_span = next(
+            span
+            for block in page.get_text("dict")["blocks"]
+            if "lines" in block
+            for line in block["lines"]
+            for span in line["spans"]
+            if span["text"] == "markdown2pdf © Markdown to PDF Converter"
+        )
+        footer_center = (footer_span["bbox"][0] + footer_span["bbox"][2]) / 2
+        assert abs(footer_center - page.rect.width / 2) < 1
+
+
 def test_pdf_with_h2_as_first_heading_keeps_selected_theme() -> None:
     response = client.post(
-        "/api/convert",
-        json={
+        "/convert",
+        data={
             "markdown": "## First section\n\n### A subsection\n\nBody text.\n\n## Second section",
             "theme": "corporate",
         },
@@ -167,8 +198,8 @@ def test_conversion_falls_back_when_selected_theme_renderer_fails(monkeypatch) -
 
     monkeypatch.setattr("app.main.render_pdf", fail_themed_render)
     response = client.post(
-        "/api/convert",
-        json={
+        "/convert",
+        data={
             "markdown": "# Fallback PDF\n\nKeep this content in the generated file.",
             "theme": "minimal",
         },
@@ -178,6 +209,7 @@ def test_conversion_falls_back_when_selected_theme_renderer_fails(monkeypatch) -
     assert response.content.startswith(b"%PDF-")
     document = pymupdf.open(stream=response.content, filetype="pdf")
     assert "Keep this content" in document[0].get_text()
+    assert all("markdown2pdf © Markdown to PDF Converter" in page.get_text() for page in document)
 
 
 def test_midnight_pdf_has_dark_page_background() -> None:
