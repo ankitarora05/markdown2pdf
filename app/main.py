@@ -6,6 +6,7 @@ import io
 import json
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Annotated
 from urllib.parse import urlsplit, urlunsplit
@@ -69,7 +70,13 @@ def theme_files_signature() -> tuple[tuple[str, int, int], ...]:
 
 THEMES = load_themes()
 THEME_SIGNATURE = theme_files_signature()
-markdown_renderer = MarkdownIt("commonmark", {"html": False}).enable("table")
+
+
+def create_markdown_renderer() -> MarkdownIt:
+    return MarkdownIt("commonmark", {"html": False}).enable("table")
+
+
+markdown_renderer = create_markdown_renderer()
 
 
 def get_themes() -> dict[str, str]:
@@ -206,10 +213,34 @@ async def list_themes() -> dict[str, list[dict[str, str]]]:
     themes = get_themes()
     return {
         "themes": [
-            {"id": name, "label": name.replace("-", " ").title()}
-            for name in sorted(themes)
+            {
+                "id": name,
+                "label": name.replace("-", " ").title(),
+                "css": css,
+            }
+            for name, css in sorted(themes.items())
         ]
     }
+
+
+@app.get("/api/themes/{theme_id}.css", include_in_schema=False)
+async def theme_stylesheet(theme_id: str) -> Response:
+    css = get_themes().get(theme_id)
+    if css is None:
+        raise HTTPException(status_code=404, detail="Unknown PDF theme")
+
+    scope = f'.paper[data-theme="{theme_id}"]'
+
+    def scope_rule(match: re.Match[str]) -> str:
+        boundary, selectors = match.groups()
+        scoped_selectors = []
+        for selector in selectors.split(","):
+            selector = selector.strip()
+            scoped_selectors.append(scope if selector == "body" else f"{scope} {selector}")
+        return f"{boundary}\n{', '.join(scoped_selectors)} {{"
+
+    scoped_css = re.sub(r"(^|\})\s*([^{}]+)\s*\{", scope_rule, css)
+    return Response(scoped_css, media_type="text/css; charset=utf-8")
 
 
 @app.post("/api/preview")
@@ -230,8 +261,9 @@ def render_pdf(markdown: str, theme: str) -> bytes:
     if theme not in themes:
         raise ValueError("Unknown PDF theme")
     pdf = MarkdownPdf(toc_level=2, optimize=True)
+    pdf.m_d = create_markdown_renderer()
     pdf.meta["title"] = "markdown2pdf document"
-    pdf.add_section(Section(markdown), user_css=themes[theme])
+    pdf.add_section(Section(markdown, borders=(0, 0, 0, 0)), user_css=themes[theme])
     if pdf.toc and pdf.toc[0][0] > 1:
         # PyMuPDF requires the first outline entry to be level 1. Documents
         # that start with `##` otherwise fail during save and lose their theme.
@@ -260,8 +292,9 @@ def render_pdf(markdown: str, theme: str) -> bytes:
 def render_pdf_fallback(markdown: str) -> bytes:
     """Render a plain PDF without custom CSS or a table of contents."""
     pdf = MarkdownPdf(toc_level=0, optimize=False)
+    pdf.m_d = create_markdown_renderer()
     pdf.meta["title"] = "markdown2pdf document"
-    pdf.add_section(Section(markdown))
+    pdf.add_section(Section(markdown, borders=(0, 0, 0, 0)))
     output = io.BytesIO()
     pdf.save_bytes(output)
     return add_copyright_footer(output.getvalue())

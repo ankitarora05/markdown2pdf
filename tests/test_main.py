@@ -94,7 +94,8 @@ def test_public_site_url_sets_canonical_domain(monkeypatch) -> None:
 def test_themes_are_discovered() -> None:
     response = client.get("/api/themes")
     assert response.status_code == 200
-    assert {theme["id"] for theme in response.json()["themes"]} >= {
+    themes = response.json()["themes"]
+    assert {theme["id"] for theme in themes} >= {
         "academic",
         "default",
         "dark",
@@ -112,6 +113,19 @@ def test_themes_are_discovered() -> None:
         "solarized",
         "warm",
     }
+    default_theme = next(theme for theme in themes if theme["id"] == "default")
+    assert "font-size: 10.5pt" in default_theme["css"]
+    assert "#20242c" in default_theme["css"]
+
+
+def test_theme_stylesheet_is_scoped_to_the_preview_document() -> None:
+    response = client.get("/api/themes/default.css")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/css")
+    assert '.paper[data-theme="default"] {' in response.text
+    assert '.paper[data-theme="default"] h1' in response.text
+    assert "body {" not in response.text
+    assert client.get("/api/themes/unknown.css").status_code == 404
 
 
 def test_preview_renders_and_sanitizes_html() -> None:
@@ -151,6 +165,25 @@ def test_conversion_returns_pdf() -> None:
     assert response.headers["content-type"] == "application/pdf"
     assert "markdown2pdf-document.pdf" in response.headers["content-disposition"]
     assert response.content.startswith(b"%PDF-")
+
+
+def test_default_pdf_uses_readable_theme_typography_and_insets() -> None:
+    document = pymupdf.open(
+        stream=render_pdf("# Quality heading\n\nBody typography check.", "default"),
+        filetype="pdf",
+    )
+    spans = [
+        span
+        for block in document[0].get_text("dict")["blocks"]
+        if "lines" in block
+        for line in block["lines"]
+        for span in line["spans"]
+    ]
+    heading = next(span for span in spans if span["text"] == "Quality heading")
+    paragraph = next(span for span in spans if span["text"] == "Body typography check.")
+    assert heading["size"] == 21
+    assert paragraph["size"] == 10.5
+    assert 35 <= paragraph["bbox"][0] <= 45
 
 
 def test_generated_pdf_has_centered_footer_on_every_page() -> None:

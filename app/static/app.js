@@ -6,6 +6,10 @@ const clearButton = document.querySelector('#clearButton');
 const wordCount = document.querySelector('#wordCount');
 const lineGutter = document.querySelector('#lineGutter');
 const toast = document.querySelector('#toast');
+const previewThemeStylesheet = document.createElement('link');
+previewThemeStylesheet.id = 'previewThemeStyles';
+previewThemeStylesheet.rel = 'stylesheet';
+document.head.append(previewThemeStylesheet);
 const STORAGE_KEY = 'markdown2pdf.markdown.v1';
 
 const starter = `# Your next great document
@@ -59,8 +63,10 @@ function syncEditorDetails() {
 }
 
 function applyPreviewTheme() {
-  preview.dataset.theme = themeSelect.value || 'default';
-  preview.parentElement.dataset.theme = themeSelect.value || 'default';
+  const selectedTheme = themeSelect.value || 'default';
+  preview.dataset.theme = selectedTheme;
+  preview.parentElement.dataset.theme = selectedTheme;
+  previewThemeStylesheet.href = `/api/themes/${encodeURIComponent(selectedTheme)}.css`;
 }
 
 async function renderPreview() {

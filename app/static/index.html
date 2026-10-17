@@ -1,10 +1,12 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f8fc">
-  <meta name="description" content="Convert Markdown to PDF free with 16 themes: GitHub, Midnight, Dracula, Monokai, Nord, Solarized, Academic, and more. Live preview, no CSS, instant download.">
+  <meta name="description"
+    content="Convert Markdown to PDF free with 16 themes: GitHub, Midnight, Dracula, Monokai, Nord, Solarized, Academic, and more. Live preview, no CSS, instant download.">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <link rel="canonical" href="{{CANONICAL_URL}}">
@@ -13,12 +15,14 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="markdown2pdf">
   <meta property="og:title" content="Markdown to PDF Converter | markdown2pdf">
-  <meta property="og:description" content="Convert Markdown to a polished PDF with 16 themes, live preview, and one-click download. No account or custom CSS required.">
+  <meta property="og:description"
+    content="Convert Markdown to a polished PDF with 16 themes, live preview, and one-click download. No account or custom CSS required.">
   <meta property="og:url" content="{{CANONICAL_URL}}">
   <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Markdown to PDF Converter | markdown2pdf">
-  <meta name="twitter:description" content="Convert Markdown to a polished PDF with 16 selectable themes, live preview, and instant download. Free and no account required.">
+  <meta name="twitter:description"
+    content="Convert Markdown to a polished PDF with 16 selectable themes, live preview, and instant download. Free and no account required.">
   <title>Markdown to PDF Converter | markdown2pdf</title>
   <meta name="google-site-verification" content="BleH8DOuZ9FtzDExKYsiuQud2m6p8FVyLIneOwSkc-E" />
   <script type="application/ld+json">
@@ -108,8 +112,18 @@
     }
   </script>
   <link rel="stylesheet" href="/static/app.css?v=themes-16-pdf-recovery">
-  <script src="/static/app.js?v=server-form-export" defer></script>
+  <script src="/static/app.js?v=shared-pdf-preview-themes" defer></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-B3C00LZ1X2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-B3C00LZ1X2');
+  </script>
 </head>
+
 <body>
   <div class="app-shell">
     <header class="topbar">
@@ -151,15 +165,19 @@
     <main class="workspace">
       <section class="editor-panel" aria-label="Markdown editor">
         <div class="panel-heading">
-          <div class="panel-label"><span class="file-icon" aria-hidden="true">M↓</span> Untitled document <span class="edited-dot" aria-hidden="true"></span></div>
-          <button class="icon-button" id="clearButton" type="button" title="Clear document" aria-label="Clear document">⌫</button>
+          <div class="panel-label"><span class="file-icon" aria-hidden="true">M↓</span> Untitled document <span
+              class="edited-dot" aria-hidden="true"></span></div>
+          <button class="icon-button" id="clearButton" type="button" title="Clear document"
+            aria-label="Clear document">⌫</button>
         </div>
         <div class="editor-wrap">
           <div class="line-gutter" id="lineGutter" aria-hidden="true">1</div>
-          <textarea id="markdownInput" name="markdown" form="convertForm" aria-label="Markdown source" spellcheck="false" autocapitalize="off" autocomplete="off" required maxlength="250000"></textarea>
+          <textarea id="markdownInput" name="markdown" form="convertForm" aria-label="Markdown source"
+            spellcheck="false" autocapitalize="off" autocomplete="off" required maxlength="250000"></textarea>
         </div>
         <footer class="editor-footer">
-          <div class="markdown-hint"><span class="markdown-badge">M↓</span> Markdown <span class="hint-divider">·</span> <span id="wordCount">0 words</span></div>
+          <div class="markdown-hint"><span class="markdown-badge">M↓</span> Markdown <span class="hint-divider">·</span>
+            <span id="wordCount">0 words</span></div>
           <span class="shortcut-hint"><kbd>⌘</kbd><kbd>↵</kbd> to export</span>
         </footer>
       </section>
@@ -180,57 +198,116 @@
       <div class="seo-intro">
         <p class="seo-eyebrow">A simpler way to share what you write</p>
         <h1 id="seo-title">Convert Markdown to PDF, beautifully.</h1>
-        <p>Turn notes, documentation, reports, and AI-generated Markdown into a clean PDF in a few clicks. See the formatting as you write, choose from 16 distinct styles, and download a ready-to-share document—without wrestling with CSS or installing a tool.</p>
+        <p>Turn notes, documentation, reports, and AI-generated Markdown into a clean PDF in a few clicks. See the
+          formatting as you write, choose from 16 distinct styles, and download a ready-to-share document—without
+          wrestling with CSS or installing a tool.</p>
       </div>
       <div class="seo-grid">
         <article>
           <h2>Write, preview, export</h2>
-          <p>Use the live preview to check headings, lists, tables, quotes, and code before you export. Your PDF is generated from the Markdown source, so the output stays readable and consistent.</p>
+          <p>Use the live preview to check headings, lists, tables, quotes, and code before you export. Your PDF is
+            generated from the Markdown source, so the output stays readable and consistent.</p>
         </article>
         <article>
           <h2>Choose a document theme</h2>
-          <p>Choose a style for your content: GitHub, Midnight, Dracula, or Monokai for technical docs; Academic or Minimal for clean reading; Nord, Ocean, Forest, Rose, Sepia, Solarized, or Warm for color; and Paper, High Contrast, or Corporate for everyday and professional documents. Themes match in live preview and PDF export.</p>
+          <p>Choose a style for your content: GitHub, Midnight, Dracula, or Monokai for technical docs; Academic or
+            Minimal for clean reading; Nord, Ocean, Forest, Rose, Sepia, Solarized, or Warm for color; and Paper, High
+            Contrast, or Corporate for everyday and professional documents. Themes match in live preview and PDF export.
+          </p>
         </article>
         <article>
           <h2>Keep your draft close</h2>
-          <p>Your working draft is saved in this browser, and the converter does not keep documents on the server. Export a PDF when you are ready to save or share your work.</p>
+          <p>Your working draft is saved in this browser, and the converter does not keep documents on the server.
+            Export a PDF when you are ready to save or share your work.</p>
         </article>
       </div>
       <section class="theme-showcase" aria-labelledby="theme-title">
         <h2 id="theme-title">16 Markdown to PDF themes for every kind of document</h2>
-        <p>From a GitHub README to a class paper or client report, choose a ready-made PDF style without writing CSS.</p>
+        <p>From a GitHub README to a class paper or client report, choose a ready-made PDF style without writing CSS.
+        </p>
         <div class="theme-grid">
-          <article><h3>Paper</h3><p>Clean, balanced styling for everyday writing.</p></article>
-          <article><h3>GitHub</h3><p>Familiar, crisp styling for READMEs and technical docs.</p></article>
-          <article><h3>Midnight</h3><p>A full dark page with high-contrast text.</p></article>
-          <article><h3>Academic</h3><p>Classic serif typography for essays and study notes.</p></article>
-          <article><h3>Minimal</h3><p>Quiet spacing and restrained decoration.</p></article>
-          <article><h3>Nord</h3><p>Cool arctic blues with a calm, structured feel.</p></article>
-          <article><h3>Solarized</h3><p>A soft parchment palette with teal and blue accents.</p></article>
-          <article><h3>Warm</h3><p>Inviting cream tones and earthy details.</p></article>
-          <article><h3>Dracula</h3><p>Deep violet charcoal with vivid pink and cyan.</p></article>
-          <article><h3>Monokai</h3><p>Classic editor-inspired dark colors with lime accents.</p></article>
-          <article><h3>Ocean</h3><p>Airy blue backgrounds with crisp teal details.</p></article>
-          <article><h3>Forest</h3><p>Soft green paper and calm botanical accents.</p></article>
-          <article><h3>Rose</h3><p>Blush-tinted pages with warm berry highlights.</p></article>
-          <article><h3>Sepia</h3><p>Bookish serif typography on parchment tones.</p></article>
-          <article><h3>High Contrast</h3><p>Bold black text and clear rules for readability.</p></article>
-          <article><h3>Corporate</h3><p>Polished navy and cool gray for business reports.</p></article>
+          <article>
+            <h3>Paper</h3>
+            <p>Clean, balanced styling for everyday writing.</p>
+          </article>
+          <article>
+            <h3>GitHub</h3>
+            <p>Familiar, crisp styling for READMEs and technical docs.</p>
+          </article>
+          <article>
+            <h3>Midnight</h3>
+            <p>A full dark page with high-contrast text.</p>
+          </article>
+          <article>
+            <h3>Academic</h3>
+            <p>Classic serif typography for essays and study notes.</p>
+          </article>
+          <article>
+            <h3>Minimal</h3>
+            <p>Quiet spacing and restrained decoration.</p>
+          </article>
+          <article>
+            <h3>Nord</h3>
+            <p>Cool arctic blues with a calm, structured feel.</p>
+          </article>
+          <article>
+            <h3>Solarized</h3>
+            <p>A soft parchment palette with teal and blue accents.</p>
+          </article>
+          <article>
+            <h3>Warm</h3>
+            <p>Inviting cream tones and earthy details.</p>
+          </article>
+          <article>
+            <h3>Dracula</h3>
+            <p>Deep violet charcoal with vivid pink and cyan.</p>
+          </article>
+          <article>
+            <h3>Monokai</h3>
+            <p>Classic editor-inspired dark colors with lime accents.</p>
+          </article>
+          <article>
+            <h3>Ocean</h3>
+            <p>Airy blue backgrounds with crisp teal details.</p>
+          </article>
+          <article>
+            <h3>Forest</h3>
+            <p>Soft green paper and calm botanical accents.</p>
+          </article>
+          <article>
+            <h3>Rose</h3>
+            <p>Blush-tinted pages with warm berry highlights.</p>
+          </article>
+          <article>
+            <h3>Sepia</h3>
+            <p>Bookish serif typography on parchment tones.</p>
+          </article>
+          <article>
+            <h3>High Contrast</h3>
+            <p>Bold black text and clear rules for readability.</p>
+          </article>
+          <article>
+            <h3>Corporate</h3>
+            <p>Polished navy and cool gray for business reports.</p>
+          </article>
         </div>
       </section>
       <div class="seo-faq" id="faq">
         <h2>Markdown to PDF questions</h2>
         <details>
           <summary>How do I convert Markdown to PDF?</summary>
-          <p>Paste or write Markdown in the editor, choose a document theme, and select Export PDF. The PDF downloads directly to your device.</p>
+          <p>Paste or write Markdown in the editor, choose a document theme, and select Export PDF. The PDF downloads
+            directly to your device.</p>
         </details>
         <details>
           <summary>Can I preview my Markdown before downloading?</summary>
-          <p>Yes. The preview updates as you edit, so you can review the formatted document before exporting it as a PDF.</p>
+          <p>Yes. The preview updates as you edit, so you can review the formatted document before exporting it as a
+            PDF.</p>
         </details>
         <details>
           <summary>Which PDF themes are available?</summary>
-          <p>Choose from 16 built-in themes: Paper, GitHub, Midnight, Academic, Minimal, Nord, Solarized, Warm, Dracula, Monokai, Ocean, Forest, Rose, Sepia, High Contrast, and Corporate. No custom CSS is needed.</p>
+          <p>Choose from 16 built-in themes: Paper, GitHub, Midnight, Academic, Minimal, Nord, Solarized, Warm, Dracula,
+            Monokai, Ocean, Forest, Rose, Sepia, High Contrast, and Corporate. No custom CSS is needed.</p>
         </details>
         <details>
           <summary>Do I need an account or custom CSS?</summary>
@@ -238,22 +315,30 @@
         </details>
         <details>
           <summary>Is my Markdown document saved?</summary>
-          <p>The editor saves your draft in your browser's local storage. The converter processes content to create the preview and PDF but does not store documents on the server.</p>
+          <p>The editor saves your draft in your browser's local storage. The converter processes content to create the
+            preview and PDF but does not store documents on the server.</p>
         </details>
       </div>
       <section class="seo-about" aria-labelledby="about-title">
         <h2 id="about-title">About markdown2pdf</h2>
-        <p>markdown2pdf is a simple online Markdown-to-PDF tool for turning plain-text writing into a document that is ready to read, print, or share. Write or paste Markdown, check the live preview, choose a theme, and export without installing software or managing stylesheets.</p>
-        <p>Your draft stays in this browser's local storage. The service processes Markdown to create previews and PDFs and does not keep documents on the server. <span>Follow <a href="https://www.linkedin.com/in/ankit-arora-86a7b237/" target="_blank" rel="me noopener noreferrer">Ankit Arora</a>.</span></p>
+        <p>markdown2pdf is a simple online Markdown-to-PDF tool for turning plain-text writing into a document that is
+          ready to read, print, or share. Write or paste Markdown, check the live preview, choose a theme, and export
+          without installing software or managing stylesheets.</p>
+        <p>Your draft stays in this browser's local storage. The service processes Markdown to create previews and PDFs
+          and does not keep documents on the server. <span>Follow <a
+              href="https://www.linkedin.com/in/ankit-arora-86a7b237/" target="_blank"
+              rel="me noopener noreferrer">Ankit Arora</a>.</span></p>
       </section>
     </section>
 
     <footer class="site-footer">
-      <span>Creator <a href="https://www.linkedin.com/in/ankit-arora-86a7b237/" target="_blank" rel="me noopener noreferrer">markdown2pdf © Ankit Arora</a></span>
+      <span>Creator <a href="https://www.linkedin.com/in/ankit-arora-86a7b237/" target="_blank"
+          rel="me noopener noreferrer">markdown2pdf © Ankit Arora</a></span>
       <span>markdown2pdf · Markdown to PDF</span>
     </footer>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 </body>
+
 </html>
