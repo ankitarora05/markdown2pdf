@@ -35,18 +35,26 @@ Convert Markdown to polished PDF documents with a responsive editor, live saniti
 
 ## Run locally
 
-Requires Python 3.11 or newer and pip.
+Requires Python 3.11 or newer and Docker Desktop for Mac (which includes Docker Compose). Install Docker Desktop from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) and launch it. A separate PostgreSQL installer is not needed: Compose downloads and runs PostgreSQL 18 or newer in a container.
 
-1. Create and activate a virtual environment.
-2. Install the app and test dependencies: `pip install -r requirements-dev.txt`
-3. Start the server: `uvicorn app.main:app --reload --port 7860`
-4. Open `http://127.0.0.1:7860`.
+From the repository root, create a Python environment, install dependencies, and start the database and app:
 
-Without `DATABASE_URL`, account data is stored in the local SQLite database at `data/auth.sqlite3` (ignored by Git). For PostgreSQL, set `DATABASE_URL` to a SQLAlchemy URL such as `postgresql+psycopg://user:password@host:5432/database`. Set a persistent, random `JWT_SECRET` in every deployed environment; otherwise sessions are invalidated whenever the process restarts. Refresh cookies are HttpOnly and Secure in the production Docker image.
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+sh scripts/start-local.sh
+```
+
+When Uvicorn reports that it is running, open `http://127.0.0.1:8000`. Stop the app with **Ctrl+C**. The PostgreSQL container remains running; stop it separately with `docker compose stop postgres`.
+
+The script starts PostgreSQL with Docker Compose, waits for its health check, and connects the app to `127.0.0.1:5433` (mapped to PostgreSQL's container port `5432`). The local app listens on port `8000`. The development database is `markdown2pdf`, with local-only username/password `markdown2pdf` / `markdown2pdf_local`; do not use these credentials in a deployed environment. Data persists in the `local_postgres_data` Docker volume. Stop the database with `docker compose stop postgres`; restart it by running the startup script again. To remove the database and permanently delete its local data, run `docker compose down --volumes`. Without `DATABASE_URL`, a direct `uvicorn` run uses the SQLite database at `data/auth.sqlite3` (ignored by Git).
+
+In production, set `DATABASE_URL` to the connection URL provided by your managed PostgreSQL service, for example `postgresql+psycopg://user:password@host:5432/database`. The deployed app listens on the platform-provided `PORT` (7860 on Hugging Face Spaces); PostgreSQL runs separately and its host/port come from that connection URL. Set a persistent, random `JWT_SECRET` in every deployed environment; otherwise sessions are invalidated whenever the process restarts. Refresh cookies are HttpOnly and Secure in the production Docker image.
 
 Configure `SMTP_HOST`, `SMTP_PORT` (default `587`), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`, and optionally `SMTP_USE_TLS` for password-reset email delivery. Signup itself does not require email confirmation. The reset endpoint intentionally returns the same message whether or not the email belongs to an account.
 
-For a production-like local run, use `uvicorn app.main:app --host 0.0.0.0 --port 7860`.
+For a production-like local app port, use `uvicorn app.main:app --host 0.0.0.0 --port 7860`.
 
 ## Verify
 
@@ -54,7 +62,7 @@ Run `pytest`. The tests check health and UI routes, authentication and refresh-t
 
 ## Docker
 
-Build and start the container with Docker Compose not required:
+Build and start the production app container (Docker Compose is not required):
 
 - `docker build -t markdown2pdf .`
 - `docker run --rm -p 7860:7860 -e PORT=7860 markdown2pdf`
